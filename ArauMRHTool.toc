@@ -8,7 +8,7 @@
 ## SavedVariables: ArauMRHToolDB
 ## OptionalDeps: LibStub, LibEQOL, LibSharedMedia-3.0
 ## X-Curse-Project-ID: 1504924
-## X-Wago-ID:
+## X-Wago-ID: EGPeoeN1
 ## IconTexture: 7548932
 
 Libs/LibStub/LibStub.lua

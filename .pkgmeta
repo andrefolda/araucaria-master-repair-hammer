@@ -13,3 +13,4 @@ ignore:
   - .vscode
   - GUIDELINES.md
   - CLAUDE.md
+  - README.md

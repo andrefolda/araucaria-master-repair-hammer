@@ -1,8 +1,7 @@
 # Araucaria Master Repair Hammer
 
 [![CurseForge](https://img.shields.io/curseforge/v/1504924?label=CurseForge&logo=curseforge&color=F16436)](https://www.curseforge.com/wow/addons/araucaria-master-repair-hammer)
-[![Wago](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Faddons.wago.io%2Fapi%2Fproject%2FEGPeoeN1%2Fversion&query=%24.display_version&label=Wago&color=3B4FA3&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn5KVPC90ZXh0Pjwvc3ZnPg==)](https://addons.wago.io/addons/EGPeoeN1)
-![WoW](https://img.shields.io/badge/WoW-11.2.0-blue?logo=battle.net)
+![WoW](https://img.shields.io/badge/WoW-12.0.1-blue?logo=battle.net)
 
 A World of Warcraft addon for Blacksmiths who carry the **Thalassian Master Repair Hammer**. It monitors the durability of your equipped gear and shows clickable icons for each piece that needs repair — clicking an icon uses the hammer to repair that slot directly.
 

@@ -36,6 +36,27 @@ function ns:DebugTable(msg, table)
     end
 end
 
+function ns:DebugTable2(msg, tbl, depth)
+    if not self.config or not self.config.debugEnabled then
+        return
+    end
+
+    depth = depth or 0
+    local indent = string.rep("  ", depth)
+
+    if msg then
+        print("|cff00ff00[" .. addonName .. "]|r", indent .. msg)
+    end
+
+    for key, value in pairs(tbl) do
+        if type(value) == "table" then
+            self:DebugTable2(tostring(key), value, depth + 1)
+        else
+            print(indent .. "  " .. tostring(key), value)
+        end
+    end
+end
+
 -- =========================================
 -- Professions
 -- =========================================

@@ -182,6 +182,25 @@ local function AddFrameSettings(frame)
     local settings = {
 
         {
+            name = L.TODAY_SAVED,
+            kind = LEM.SettingType.Input,
+            readOnly = true,
+            get = function()
+                return GetMoneyString(ns:GetCharConfig("goldSaved.daily." .. date("%Y%m%d")) or 0, true)
+            end,
+        },
+        {
+            name = L.TOTAL_SAVED,
+            kind = LEM.SettingType.Input,
+            readOnly = true,
+            get = function()
+                return GetMoneyString(ns:GetCharConfig("goldSaved.total") or 0, true)
+            end,
+        },
+
+
+
+        {
             id = "durabilityThresholdConfig",
             name = L.DURABILITY_THRESHOLD_SETTINGS,
             kind = LEM.SettingType.Collapsible,
@@ -296,6 +315,19 @@ local function AddFrameSettings(frame)
                 ns:SetLayoutConfig("icon.height", value, true)
             end,
         },
+        {
+            parentId = "iconConfigs",
+            name = L.SHOW_ONLY_REPAIRABLE,
+            kind = LEM.SettingType.Checkbox,
+            default = ns.defaults.showOnlyRepairable,
+            tooltip = L.SHOW_ONLY_REPAIRABLE_TOOLTIP,
+            get = function()
+                return ns:GetLayoutConfig("showOnlyRepairable")
+            end,
+            set = function(_, value)
+                ns:SetLayoutConfig("showOnlyRepairable", value, true)
+            end,
+        },
 
 
 
@@ -379,6 +411,75 @@ local function AddFrameSettings(frame)
             end,
             set = function(_, value)
                 ns:SetLayoutConfig("icon.durabilityText.position.yOffset", value, true)
+            end,
+        },
+
+
+
+        {
+            id = "iconWarningConfigs",
+            name = L.WARNING_ICON_SETTINGS,
+            kind = LEM.SettingType.Collapsible,
+            defaultCollapsed = false,
+        },
+        {
+            parentId = "iconWarningConfigs",
+            name = L.SIZE,
+            kind = LEM.SettingType.Slider,
+            field = "warningIconSize",
+            default = ns.defaults.icon.warningIcon.size,
+            minValue = 6,
+            maxValue = 32,
+            valueStep = 1,
+            allowInput = true,
+            formatter = function(value)
+                return tostring(value)
+            end,
+            get = function()
+                return ns:GetLayoutConfig("icon.warningIcon.size")
+            end,
+            set = function(_, value)
+                ns:SetLayoutConfig("icon.warningIcon.size", value, true)
+            end,
+        },
+        {
+            parentId = "iconWarningConfigs",
+            name = L.X_OFFSET,
+            kind = LEM.SettingType.Slider,
+            field = "warningIconXOffset",
+            default = ns.defaults.icon.warningIcon.position.xOffset,
+            minValue = -50,
+            maxValue = 50,
+            valueStep = 1,
+            allowInput = true,
+            formatter = function(value)
+                return tostring(value)
+            end,
+            get = function()
+                return ns:GetLayoutConfig("icon.warningIcon.position.xOffset")
+            end,
+            set = function(_, value)
+                ns:SetLayoutConfig("icon.warningIcon.position.xOffset", value, true)
+            end,
+        },
+        {
+            parentId = "iconWarningConfigs",
+            name = L.Y_OFFSET,
+            kind = LEM.SettingType.Slider,
+            field = "warningIconYOffset",
+            default = ns.defaults.icon.warningIcon.position.yOffset,
+            minValue = -50,
+            maxValue = 50,
+            valueStep = 1,
+            allowInput = true,
+            formatter = function(value)
+                return tostring(value)
+            end,
+            get = function()
+                return ns:GetLayoutConfig("icon.warningIcon.position.yOffset")
+            end,
+            set = function(_, value)
+                ns:SetLayoutConfig("icon.warningIcon.position.yOffset", value, true)
             end,
         },
 

@@ -72,6 +72,11 @@ function ns:InitializeConfig()
     self.config = ArauMRHToolDB
 end
 
+function ns:InitializeCharConfig()
+    ArauMRHToolCharDB = ArauMRHToolCharDB or {}
+    self.charConfig = ArauMRHToolCharDB
+end
+
 function ns:GetConfig(path, fallback)
     if not self.config then
         return fallback
@@ -102,6 +107,29 @@ function ns:GetLayoutConfig(path, fallback)
     path = layoutConfigName .. "." .. path
 
     return self:GetConfig(path, fallback)
+end
+
+function ns:GetCharConfig(path, fallback)
+    if not self.charConfig then
+        return fallback
+    end
+
+    local value = GetNestedValue(self.charConfig, path)
+
+    if value == nil then
+
+        local defaultValue = GetNestedValue(self.defaults, path)
+
+        if defaultValue == nil then
+            return fallback
+        end
+
+        self:SetCharConfig(path, DeepCopy(defaultValue))
+
+        return self:GetCharConfig(path, fallback)
+    end
+
+    return value
 end
 
 function ns:IsValidOrientation(value)
@@ -154,4 +182,16 @@ function ns:SetLayoutConfig(path, value, refreshEquipmentFrame)
     path = layoutConfigName .. "." .. path
 
     return self:SetConfig(path, value, refreshEquipmentFrame)
+end
+
+function ns:SetCharConfig(path, value)
+    if not self.charConfig then
+        return false
+    end
+
+    SetNestedValue(self.charConfig, path, value)
+
+    self:Debug("Char config updated:", path, "=", value)
+
+    return true
 end

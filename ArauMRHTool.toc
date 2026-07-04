@@ -6,6 +6,7 @@
 ## Author: Andre Folda
 ## Version: @project-version@
 ## SavedVariables: ArauMRHToolDB
+## SavedVariablesPerCharacter: ArauMRHToolCharDB
 ## OptionalDeps: LibStub, LibEQOL, LibSharedMedia-3.0
 ## X-Curse-Project-ID: 1504924
 ## X-Wago-ID: EGPeoeN1
@@ -22,8 +23,10 @@ Locales/ptBR.lua
 Core/Enum.lua
 Core/I18n.lua
 ArauMRHTool.lua
+Core/RepairTracks.lua
 Core/Config.lua
 Core/Utils.lua
 Core/EditMode.lua
 Core/EquipmentFrame.lua
+Core/GoldTracking.lua
 Core/Init.lua

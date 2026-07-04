@@ -150,6 +150,42 @@ ns.enums.Blizz.Unit = {
     Player = "player",
 }
 
+ns.enums.Blizz.Item = {}
+
+ns.enums.Blizz.Item.ClassID = {
+    Weapon = 2,
+    Armor = 4,
+}
+
+ns.enums.Blizz.Item.ArmorSubclassID = {
+    Cloth = 1,
+    Leather = 2,
+    Mail = 3,
+    Plate = 4,
+    Cosmetic = 5,
+    Shield = 6,
+}
+
+ns.enums.Blizz.Item.WeaponSubclassID = {
+    Axe1H = 0,
+    Axe2H = 1,
+    Bow = 2,
+    Gun = 3,
+    Mace1H = 4,
+    Mace2H = 5,
+    Polearm = 6,
+    Sword1H = 7,
+    Sword2H = 8,
+    Warglaive = 9,
+    Staff = 10,
+    FistWeapon = 13,
+    Dagger = 15,
+    Thrown = 16,
+    Crossbow = 18,
+    Wand = 19,
+    FishingPole = 20,
+}
+
 ns.enums.Blizz.ScriptTypeName = {
     ScriptRegion = {
         OnShow = "OnShow",

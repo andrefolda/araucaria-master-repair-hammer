@@ -24,4 +24,20 @@ ns.Locales["ptBR"] = {
     FONT                          = "Fonte",
     X_OFFSET                      = "Deslocamento X",
     Y_OFFSET                      = "Deslocamento Y",
+
+    SHOW_ONLY_REPAIRABLE          = "Exibir Apenas Reparáveis",
+    SHOW_ONLY_REPAIRABLE_TOOLTIP  = "Exibe apenas os slots de equipamento que seu Martelo de Reparo do Mestre consegue reparar no momento. Se você acabou de masterizar uma nova especialização, recarregue a interface (/reload) para atualizar.",
+    CANNOT_REPAIR_TOOLTIP         = "Seu Martelo de Reparo do Mestre ainda não consegue reparar este item.",
+    WARNING_ICON_SETTINGS         = "Configurações do Ícone de Aviso",
+
+    TODAY_SAVED                   = "Economizado Hoje",
+    TOTAL_SAVED                   = "Total Economizado",
+    GOLD_SAVED_THIS_REPAIR        = "Você economizou %s neste reparo! Hoje: %s -- Total: %s",
+    GOLD_RESET_CHAR_CONFIRM       = "Contador do personagem resetado. Total anterior arquivado: %s em %d reparos.",
+    GOLD_RESET_ACCOUNT_CONFIRM    = "Contador da conta resetado. Total anterior arquivado: %s em %d reparos.",
+    GOLD_RESET_TODAY_CHAR_CONFIRM    = "Contador de hoje do personagem resetado. Valor anterior arquivado: %s em %d reparos.",
+    GOLD_RESET_TODAY_ACCOUNT_CONFIRM = "Contador de hoje da conta resetado. Valor anterior arquivado: %s em %d reparos.",
+    GOLD_RESET_USAGE              = "Uso: /amrh reset char|account ou /amrh resettoday char|account",
+    GOLD_SUMMARY_TODAY            = "Hoje: %s economizados em %d reparos.",
+    GOLD_SUMMARY_TOTAL            = "No total: %s economizados em %d reparos.",
 }

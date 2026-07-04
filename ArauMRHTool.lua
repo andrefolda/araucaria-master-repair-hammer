@@ -9,10 +9,6 @@ ns.isPreviewMode = false
 -- =========================================
 
 ns.const = {
-    Items = {
-        ThalassianMasterRepairHammerId = 238020,
-    },
-
     UI = {
         EditModeFrameName = ns.L.ADDON_NAME,
         InitFrame = "ARAU_MRH_TOOL_INIT_FRAME",
@@ -85,6 +81,22 @@ ns.defaults = {
     lowDurabilityThreshold = 0.4,
     criticalDurabilityThreshold = 0.2,
 
+    showOnlyRepairable = false,
+
+    goldSaved = {
+        total = 0,
+        history = {},
+        daily = {},
+        dailyHistory = {},
+    },
+
+    repairCount = {
+        total = 0,
+        history = {},
+        daily = {},
+        dailyHistory = {},
+    },
+
     frame = {
         point = ns.enums.Blizz.FramePoint.Center,
         relativePoint = ns.enums.Blizz.FramePoint.Center,
@@ -112,6 +124,13 @@ ns.defaults = {
                 lowDurability = {1, 1, 0, 1},
                 criticalDurability = {1, 0, 0, 1}
             }
+        },
+        warningIcon = {
+            size = 16,
+            position = {
+                xOffset = 0,
+                yOffset = 0,
+            },
         },
     },
 }

@@ -1,5 +1,14 @@
 local _, ns = ...
 
+local L = ns.L
+
+-- MainHand/OffHand can hold any weapon bucket (or a shield, OffHand only), so their
+-- macro depends on the currently equipped item and must be resolved every refresh.
+-- The other 8 (pure armor) slots are resolved once at login, see SetArmorSlotMacro.
+local dynamicMacroSlots = { [16] = true, [17] = true }
+
+local warningIconTexturePath = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
+
 local function ShowTooltip(owner)
     if not owner.slotId then
         return
@@ -28,6 +37,14 @@ local function HideTooltip()
 
     if ShoppingTooltip2 then
         ShoppingTooltip2:Hide()
+    end
+end
+
+local function SetArmorSlotMacro(iconFrame, slotId)
+    local plan = ns.repairPlan and ns.repairPlan.bySlot[slotId]
+
+    if plan then
+        iconFrame:SetAttribute("macrotext", "/use item:" .. plan.hammerItemId .. "\r\n/use " .. slotId)
     end
 end
 
@@ -60,6 +77,32 @@ local function CreateEquipmentIconFrame(frame, slotId)
         ns:GetLayoutConfig("icon.durabilityText.outline")
     )
 
+    iconFrame.warningIcon = CreateFrame(ns.enums.Blizz.FrameType.Frame, nil, iconFrame)
+    iconFrame.warningIcon:EnableMouse(true)
+    iconFrame.warningIcon:Hide()
+
+    -- Poor man's outline: a black copy of the same texture, slightly larger and
+    -- drawn behind (Artwork < Overlay), peeking out around the icon's shape.
+    iconFrame.warningIcon.outline = iconFrame.warningIcon:CreateTexture(nil, ns.enums.Blizz.DrawLayer.Artwork)
+    iconFrame.warningIcon.outline:SetTexture(warningIconTexturePath)
+    iconFrame.warningIcon.outline:SetVertexColor(0, 0, 0, 1)
+    iconFrame.warningIcon.outline:SetPoint(ns.enums.Blizz.FramePoint.TopLeft, iconFrame.warningIcon, -1, 1)
+    iconFrame.warningIcon.outline:SetPoint(ns.enums.Blizz.FramePoint.BottomRight, iconFrame.warningIcon, 1, -1)
+
+    iconFrame.warningIcon.texture = iconFrame.warningIcon:CreateTexture(nil, ns.enums.Blizz.DrawLayer.Overlay)
+    iconFrame.warningIcon.texture:SetAllPoints(iconFrame.warningIcon)
+    iconFrame.warningIcon.texture:SetTexture(warningIconTexturePath)
+
+    iconFrame.warningIcon:SetScript(ns.enums.Blizz.ScriptTypeName.ScriptRegion.OnEnter, function(self)
+        GameTooltip:SetOwner(self, ns.enums.Blizz.TooltipAnchor.AnchorRight)
+        GameTooltip:SetText(L.CANNOT_REPAIR_TOOLTIP)
+        GameTooltip:Show()
+    end)
+
+    iconFrame.warningIcon:SetScript(ns.enums.Blizz.ScriptTypeName.ScriptRegion.OnLeave, function()
+        GameTooltip:Hide()
+    end)
+
     iconFrame.slotId = slotId
     iconFrame.current = nil
     iconFrame.maximum = nil
@@ -74,10 +117,12 @@ local function CreateEquipmentIconFrame(frame, slotId)
     end)
 
     iconFrame:SetAttribute("type", "macro")
-    iconFrame:SetAttribute(
-        "macrotext",
-        "/use item:" .. ns.const.Items.ThalassianMasterRepairHammerId .. "\r\n/use " .. slotId
-    )
+
+    if not dynamicMacroSlots[slotId] then
+        SetArmorSlotMacro(iconFrame, slotId)
+    end
+
+    ns:HookGoldTrackingForIcon(iconFrame)
 
     return iconFrame
 end
@@ -121,6 +166,7 @@ end
 
 local function GetLowDurabilityItems()
     local threshold = ns:GetLayoutConfig("durabilityThreshold")
+    local showOnlyRepairable = ns:GetLayoutConfig("showOnlyRepairable")
     local lowDurabilityItems = {}
 
     for _, slotId in ipairs(ns.const.Equipment.WatchedSlots) do
@@ -133,13 +179,32 @@ local function GetLowDurabilityItems()
                 local texture = GetInventoryItemTexture(ns.enums.Blizz.Unit.Player, slotId)
 
                 if texture then
-                    lowDurabilityItems[slotId] = {
-                        slotId = slotId,
-                        texture = texture,
-                        current = current,
-                        maximum = maximum,
-                        ratio = ratio,
-                    }
+                    local itemLevelReq, classID, subclassID
+                    local itemLink = GetInventoryItemLink(ns.enums.Blizz.Unit.Player, slotId)
+
+                    if itemLink then
+                        local _, _, _, _, minLevel, _, _, _, _, _, _, itemClassID, itemSubClassID =
+                            C_Item.GetItemInfo(itemLink)
+                        itemLevelReq = minLevel
+                        classID = itemClassID
+                        subclassID = itemSubClassID
+                    end
+
+                    local repairable = ns:CanRepairSlot(slotId, itemLevelReq, classID, subclassID)
+
+                    if repairable or not showOnlyRepairable then
+                        lowDurabilityItems[slotId] = {
+                            slotId = slotId,
+                            texture = texture,
+                            current = current,
+                            maximum = maximum,
+                            ratio = ratio,
+                            itemLevelReq = itemLevelReq,
+                            classID = classID,
+                            subclassID = subclassID,
+                            repairable = repairable,
+                        }
+                    end
                 end
             end
         end
@@ -157,7 +222,7 @@ local function GetDummyItems()
         ns.dummyItems = {}
     end
 
-    if #ns.dummyItems > 0 then
+    if next(ns.dummyItems) then
         return ns.dummyItems
     end
 
@@ -175,20 +240,45 @@ local function GetDummyItems()
     }
 
     local durabilityThreshold = ns:GetLayoutConfig("durabilityThreshold")
+    local showOnlyRepairable = ns:GetLayoutConfig("showOnlyRepairable")
 
-    for _, slotId in ipairs(ns.const.Equipment.WatchedSlots) do
+    local slots = ns.const.Equipment.WatchedSlots
+    local unrepairableSlots = {}
+    do
+        local pool = {}
+        for i, slotId in ipairs(slots) do
+            pool[i] = slotId
+        end
+
+        local unrepairableCount = math.min(math.random(1, 3), #pool)
+        for _ = 1, unrepairableCount do
+            local index = math.random(1, #pool)
+            unrepairableSlots[table.remove(pool, index)] = true
+        end
+    end
+
+    for _, slotId in ipairs(slots) do
 
         local ratio = math.random() * durabilityThreshold
 
         local texture = dummyTextures[slotId]
+        local repairable = not unrepairableSlots[slotId]
 
-        ns.dummyItems[slotId] = {
-            slotId = slotId,
-            texture = texture,
-            current = ratio * 100,
-            maximum = 100,
-            ratio = ratio
-        }
+        if repairable or not showOnlyRepairable then
+            ns.dummyItems[slotId] = {
+                slotId = slotId,
+                texture = texture,
+                current = ratio * 100,
+                maximum = 100,
+                ratio = ratio,
+                itemLevelReq = 90,
+                classID = ns.enums.Blizz.Item.ClassID.Armor,
+                subclassID = repairable
+                    and ns.enums.Blizz.Item.ArmorSubclassID.Plate
+                    or ns.enums.Blizz.Item.ArmorSubclassID.Leather,
+                repairable = repairable,
+            }
+        end
 
     end
 
@@ -225,6 +315,34 @@ local function LayoutIconText(iconFrame, itemData)
     end
 end
 
+local function SetWeaponSlotMacro(iconFrame, slotId, itemData)
+    local plan = ns:GetRepairPlanEntry(slotId, itemData.classID, itemData.subclassID)
+
+    if plan then
+        iconFrame:SetAttribute("macrotext", "/use item:" .. plan.hammerItemId .. "\r\n/use " .. slotId)
+    end
+end
+
+local function LayoutWarningIcon(iconFrame, itemData)
+    local size = ns:GetLayoutConfig("icon.warningIcon.size")
+
+    iconFrame.warningIcon:SetSize(size, size)
+    iconFrame.warningIcon:ClearAllPoints()
+    iconFrame.warningIcon:SetPoint(
+        ns.enums.Blizz.FramePoint.TopRight,
+        iconFrame,
+        ns.enums.Blizz.FramePoint.TopRight,
+        ns:GetLayoutConfig("icon.warningIcon.position.xOffset"),
+        ns:GetLayoutConfig("icon.warningIcon.position.yOffset")
+    )
+
+    if itemData.repairable == false then
+        iconFrame.warningIcon:Show()
+    else
+        iconFrame.warningIcon:Hide()
+    end
+end
+
 local function LayoutIcon(iconPoint, iconFrame, itemData)
 
     local frame = ns.equipmentFrame
@@ -237,12 +355,20 @@ local function LayoutIcon(iconPoint, iconFrame, itemData)
 
     iconFrame:SetSize(iconWidth, iconHeight)
     iconFrame.texture:SetTexture(itemData.texture)
+    iconFrame.texture:SetDesaturated(itemData.repairable == false)
 
     iconFrame.current = itemData.current
     iconFrame.maximum = itemData.maximum
     iconFrame.ratio = itemData.ratio
+    iconFrame.repairable = itemData.repairable
 
     LayoutIconText(iconFrame, itemData)
+
+    if dynamicMacroSlots[iconFrame.slotId] then
+        SetWeaponSlotMacro(iconFrame, iconFrame.slotId, itemData)
+    end
+
+    LayoutWarningIcon(iconFrame, itemData)
 
     iconFrame:Show()
 end
@@ -255,10 +381,12 @@ local function ResetIcon(iconFrame)
 
     iconFrame.texture:SetTexture(nil)
     iconFrame.text:SetText("")
+    iconFrame.warningIcon:Hide()
 
     iconFrame.current = nil
     iconFrame.maximum = nil
     iconFrame.ratio = nil
+    iconFrame.repairable = nil
 
     iconFrame:Hide()
 end
@@ -378,6 +506,8 @@ function ns:RefreshFrame()
             ResetIcon(iconFrame)
         end
     end
+
+    ns:Debug("ns:RefreshFrame - visibleIcons count:", #visibleIcons)
 
     local iconPoints = CalculateIconPoints(#visibleIcons)
 

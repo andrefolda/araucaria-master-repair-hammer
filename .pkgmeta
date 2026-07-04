@@ -2,6 +2,10 @@ package-as: ArauMRHTool
 
 enable-nolib-creation: no
 
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
 externals:
   Libs/LibStub:
     url: https://repos.curseforge.com/wow/libstub/trunk
@@ -14,3 +18,4 @@ ignore:
   - GUIDELINES.md
   - CLAUDE.md
   - README.md
+  - docs

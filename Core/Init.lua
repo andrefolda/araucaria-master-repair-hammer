@@ -59,6 +59,7 @@ local function OnPlayerLogin(frame)
         ns:BuildRepairEligibilityCache()
         ns:BuildRepairPlan()
 
+        ns:EnsureLayoutDefaults()
         ns:CreateAddonFrame()
         ns:RegisterFrameWithEditMode(ns.equipmentFrame)
         ns:RefreshFrame()

@@ -68,6 +68,17 @@ ns.const = {
 
     Profession = {
         BlacksmithSkillLineId = 164
+    },
+
+    -- ns.defaults keys that are stored per Edit Mode layout; the rest
+    -- (goldSaved, repairCount) is account/character wide.
+    LayoutScopedDefaultKeys = {
+        "durabilityThreshold",
+        "lowDurabilityThreshold",
+        "criticalDurabilityThreshold",
+        "showOnlyRepairable",
+        "frame",
+        "icon",
     }
 }
 

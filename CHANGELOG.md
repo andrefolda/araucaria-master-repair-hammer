@@ -3,6 +3,16 @@
 All notable changes to this addon are documented here. This file is what gets shown
 as the release changelog on CurseForge and Wago.
 
+## [1.1.1] - 2026-08-28
+
+### Fixed
+
+- The addon showed nothing and spammed Lua errors while an Edit Mode layout with a
+  dot in its name was active — such as the "1.0 EUI" layout ElvUI creates. Settings
+  saved on those layouts are recovered, not lost.
+- Switching Edit Mode layouts now applies that layout's position and settings right
+  away, instead of waiting for the next equipment or durability change.
+
 ## [1.1.0] - 2026-07-04
 
 ### Added

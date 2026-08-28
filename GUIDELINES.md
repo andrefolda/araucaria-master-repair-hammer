@@ -64,6 +64,10 @@ Config lives in `ArauMRHToolDB` (account-wide `SavedVariables`), mirrored as `ns
 ArauMRHToolDB.editMode.layouts[layoutName].<path>
 ```
 
+`layoutName` is used as a **raw table key** — never concatenate it into a dot path
+(see [Known Pitfalls](#a-layout-name-can-contain-a-dot)). `<path>` is layout-relative,
+which is also how it's looked up in `ns.defaults`.
+
 There's also `ArauMRHToolCharDB` (per-character `SavedVariablesPerCharacter`), mirrored
 as `ns.charConfig`, used for data that must NOT be shared account-wide (currently only
 gold/repair-count tracking — see [Gold Savings Tracking](#gold-savings-tracking)).
@@ -738,6 +742,16 @@ loop, but if you see `itemLevelReq`/`classID`/`subclassID` come back `nil` in
 `GetLowDurabilityItems`, this is why. There's no dedicated retry for this specific
 case; the durability retry loop happens to cover it too since it calls
 `RefreshFrame()` again.
+
+### A layout name can contain a dot
+
+Edit Mode layout names are free text, and ElvUI auto-creates one named `1.0 EUI`.
+Building a config path as `"editMode.layouts." .. layoutName .. "." .. path` splits
+such a name into two keys, so the defaults lookup misses and `GetLayoutConfig`
+returns `nil` forever — every read on that layout crashes on the value (`ratio <= nil`,
+`unpack(nil)`, …). `Core/Config.lua` therefore resolves `layouts[layoutName]` as a table
+key and walks the layout-relative path inside it. `ns:EnsureLayoutDefaults()` copies the
+old split-key data over on first use so those users keep their settings.
 
 ### Firing the repair macro on a non-repairable item is silent and harmless
 

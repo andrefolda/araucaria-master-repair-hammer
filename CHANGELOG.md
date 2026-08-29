@@ -7,6 +7,10 @@ as the release changelog on CurseForge and Wago.
 
 ### Fixed
 
+- Damaged gear now shows up after a loading screen. Previously the display only
+  updated when durability actually changed, so gear that was already worn stayed
+  hidden until the next hit you took.
+
 - The addon showed nothing and spammed Lua errors while an Edit Mode layout with a
   dot in its name was active — such as the "1.0 EUI" layout ElvUI creates. Settings
   saved on those layouts are recovered, not lost.

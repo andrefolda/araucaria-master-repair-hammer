@@ -137,9 +137,15 @@ PLAYER_LOGIN  → ns:HasBlacksmithing()?
                         ns:RegisterFrameWithEditMode(frame)
                         ns:RefreshFrame()
                         RegisterBlacksmithListeners()
-                        (schedule adaptive retry, see Known Pitfalls)
+                        (start refresh ticker + adaptive retry, see Known Pitfalls)
                   no  → (addon stays dormant)
 ```
+
+After login, `ns:RefreshFrame()` is driven by `PLAYER_EQUIPMENT_CHANGED`,
+`UPDATE_INVENTORY_DURABILITY`, `PLAYER_REGEN_ENABLED` (deferred refresh),
+`PLAYER_ENTERING_WORLD` (zoning, also restarts the adaptive retry) and a
+`C_Timer.NewTicker` every `ns.const.RefreshIntervalSeconds` — see
+[Known Pitfalls](#durability-events-only-fire-on-a-change).
 
 The addon is entirely **inert** for non-Blacksmiths. Do not activate any UI outside this guard.
 
@@ -733,6 +739,17 @@ doesn't help either). The fix already in place is an adaptive retry in `Init.lua
 retry or replace it with a single fixed-delay `C_Timer.After` — it was specifically
 built to handle slow connections/PCs without guessing a delay that might not be
 enough.
+
+### Durability events only fire on a change
+
+`UPDATE_INVENTORY_DURABILITY` fires when durability *changes*, and gear only wears down
+in combat — so nothing triggers a refresh for gear that was already below the threshold
+before a loading screen, and the frame stays hidden until the next hit. `Init.lua`
+covers this from both sides: `PLAYER_ENTERING_WORLD` refreshes on every zone (and
+restarts the adaptive sync retry, since zoning re-creates the "not synced yet" window
+described above), plus a `C_Timer.NewTicker` running every
+`ns.const.RefreshIntervalSeconds` as a backstop. The ticker skips while
+`ns.isPreviewMode` is set, so it can't fight the Edit Mode preview.
 
 ### `C_Item.GetItemInfo` can return `nil` for an equipped item's classID/subclassID
 

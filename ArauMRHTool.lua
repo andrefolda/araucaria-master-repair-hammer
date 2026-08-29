@@ -9,6 +9,8 @@ ns.isPreviewMode = false
 -- =========================================
 
 ns.const = {
+    RefreshIntervalSeconds = 30,
+
     UI = {
         EditModeFrameName = ns.L.ADDON_NAME,
         InitFrame = "ARAU_MRH_TOOL_INIT_FRAME",

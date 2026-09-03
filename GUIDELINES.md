@@ -147,6 +147,9 @@ After login, `ns:RefreshFrame()` is driven by `PLAYER_EQUIPMENT_CHANGED`,
 `C_Timer.NewTicker` every `ns.const.RefreshIntervalSeconds` — see
 [Known Pitfalls](#durability-events-only-fire-on-a-change).
 
+`PLAYER_REGEN_DISABLED` (entering combat) does **not** go through `RefreshFrame()` —
+see `ns:HideFrameForCombat()` below.
+
 The addon is entirely **inert** for non-Blacksmiths. Do not activate any UI outside this guard.
 
 ### Refresh Pipeline
@@ -601,6 +604,19 @@ above for exactly when/how — but always follows this shape:
 This fires the resolved Master Repair Hammer at the specific slot.
 
 **Secure frame restriction:** `SecureActionButtonTemplate` frames cannot have position, size, or attributes changed during combat lockdown. Any code that calls `ClearAllPoints`, `SetPoint`, `SetSize`, or `SetAttribute` on an icon frame — including `RefreshFrame` — must be guarded with `InCombatLockdown()`. The current guard is in `RefreshFrame`; do not bypass it.
+
+### Hiding the frame in combat (`hideInCombat`)
+
+Layout-scoped checkbox (`ns:GetLayoutConfig("hideInCombat")`, default `false`). Since
+`RefreshFrame` bails out entirely under `InCombatLockdown()` (see above), it can't be
+the thing that hides the frame when combat starts. `ns:HideFrameForCombat()`
+(`EquipmentFrame.lua`), called from `PLAYER_REGEN_DISABLED`, calls `Hide()` directly
+on the (non-secure) parent frame instead — safe in combat, since only the icon
+buttons are secure, not their parent — and sets `pendingRefresh = true` so
+`PLAYER_REGEN_ENABLED` re-shows it (via the normal `RefreshFrame`) once combat ends,
+if there's still damaged gear. It also checks `ns.isPreviewMode` and does nothing
+while the Edit Mode preview is active — the preview always shows regardless of this
+setting.
 
 ---
 

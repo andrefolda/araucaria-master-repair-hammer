@@ -286,6 +286,7 @@ ns.enums.Blizz.Events = {
         PlayerLogin = "PLAYER_LOGIN",
         PlayerLogout = "PLAYER_LOGOUT",
         PlayerQuiting = "PLAYER_QUITING",
+        PlayerRegenDisabled = "PLAYER_REGEN_DISABLED",
         PlayerRegenEnabled = "PLAYER_REGEN_ENABLED",
         SearchDbLoaded = "SEARCH_DB_LOADED",
         StreamingIcon = "STREAMING_ICON",

@@ -519,3 +519,27 @@ function ns:RefreshFrame()
 
     ns:Debug("ns:RefreshFrame - end")
 end
+
+-- Called on PLAYER_REGEN_DISABLED, not through RefreshFrame: the icons are
+-- SecureActionButtonTemplate and RefreshFrame's own InCombatLockdown() guard would
+-- just bail out immediately anyway. Hiding the (non-secure) parent frame directly is
+-- unrestricted in combat. PLAYER_REGEN_ENABLED already re-runs RefreshFrame once
+-- combat ends (via pendingRefresh), which re-shows the frame if there's still damaged
+-- gear -- so this only needs to hide, never show.
+function ns:HideFrameForCombat()
+    if not self.equipmentFrame then
+        return
+    end
+
+    if self.isPreviewMode then
+        return -- Edit Mode preview always shows, regardless of this setting
+    end
+
+    if not self:GetLayoutConfig("hideInCombat") then
+        return
+    end
+
+    ns:Debug("ns:HideFrameForCombat - hiding for combat")
+    self.equipmentFrame:Hide()
+    self.pendingRefresh = true
+end

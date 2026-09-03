@@ -3,6 +3,13 @@
 All notable changes to this addon are documented here. This file is what gets shown
 as the release changelog on CurseForge and Wago.
 
+## [Unreleased]
+
+### Added
+
+- A "Hide In Combat" option to hide the addon while you're in combat. Off by
+  default. The Edit Mode preview always ignores it and keeps showing.
+
 ## [1.1.1] - 2026-08-28
 
 ### Fixed

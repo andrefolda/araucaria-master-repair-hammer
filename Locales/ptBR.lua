@@ -27,6 +27,8 @@ ns.Locales["ptBR"] = {
 
     SHOW_ONLY_REPAIRABLE          = "Exibir Apenas Reparáveis",
     SHOW_ONLY_REPAIRABLE_TOOLTIP  = "Exibe apenas os slots de equipamento que seu Martelo de Reparo do Mestre consegue reparar no momento. Se você acabou de masterizar uma nova especialização, recarregue a interface (/reload) para atualizar.",
+    HIDE_IN_COMBAT                = "Ocultar em Combate",
+    HIDE_IN_COMBAT_TOOLTIP        = "Oculta o addon enquanto você estiver em combate. A pré-visualização do Edit Mode ignora essa opção e sempre exibe.",
     CANNOT_REPAIR_TOOLTIP         = "Seu Martelo de Reparo do Mestre ainda não consegue reparar este item.",
     WARNING_ICON_SETTINGS         = "Configurações do Ícone de Aviso",
 

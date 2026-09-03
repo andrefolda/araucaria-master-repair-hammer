@@ -79,6 +79,7 @@ ns.const = {
         "lowDurabilityThreshold",
         "criticalDurabilityThreshold",
         "showOnlyRepairable",
+        "hideInCombat",
         "frame",
         "icon",
     }
@@ -95,6 +96,7 @@ ns.defaults = {
     criticalDurabilityThreshold = 0.2,
 
     showOnlyRepairable = false,
+    hideInCombat = false,
 
     goldSaved = {
         total = 0,

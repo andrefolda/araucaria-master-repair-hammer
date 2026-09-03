@@ -19,6 +19,12 @@ function ns:RegisterEditModeCallbacks()
         ns:DisableEditModePreview()
     end)
 
+    LEM:RegisterCallback("layout", function(layoutName)
+        ns:Debug("Edit Mode layout changed:", layoutName)
+        ns:EnsureLayoutDefaults()
+        ns:RefreshFrame()
+    end)
+
     self.editModeCallbacksRegistered = true
 end
 
@@ -42,37 +48,6 @@ function ns:GetDefaultFramePosition()
         x = ns.defaults.frame.x,
         y = ns.defaults.frame.y,
     }
-end
-
-local function EnsureLayoutConfig()
-    if not ns:GetConfig("editMode") then
-        ns:SetConfig("editMode", {})
-    end
-
-    if not ns:GetConfig("editMode.layouts") then
-        ns:SetConfig("editMode.layouts", {})
-    end
-
-    local layoutName = LEM.GetActiveLayoutName()
-    local layoutPath = "editMode.layouts." .. layoutName
-    if not ns:GetConfig(layoutPath) then
-        ns:SetConfig(layoutPath, {})
-    end
-
-    return ns:GetLayoutConfig("")
-end
-
-function ns:GetCurrentLayoutFramePosition()
-    local layoutConfig = EnsureLayoutConfig()
-
-    if not layoutConfig
-        or not layoutConfig.frame
-        or not layoutConfig.frame.point
-    then
-        return self:GetDefaultFramePosition()
-    end
-
-    return layoutConfig.frame
 end
 
 local orientationAnchor = {
@@ -134,7 +109,7 @@ function ns:ApplyCurrentLayoutFramePosition(frame)
         return
     end
 
-    local position = self:GetCurrentLayoutFramePosition()
+    local position = self:GetLastSavedFramePosition()
     local anchor   = self:GetOrientationAnchor()
 
     frame:ClearAllPoints()

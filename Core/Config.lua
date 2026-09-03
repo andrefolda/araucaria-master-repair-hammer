@@ -3,10 +3,6 @@ local _, ns = ...
 local LEM = LibStub("LibEQOLEditMode-1.0")
 
 
-local function removeLayoutFromPath(path)
-    return string.gsub(path, "^editMode%.layouts%.[^%.]+%.", "")
-end
-
 local function SplitPath(path)
     local parts = {}
 
@@ -86,7 +82,7 @@ function ns:GetConfig(path, fallback)
 
     if value == nil then
 
-        local defaultValue = GetNestedValue(self.defaults, removeLayoutFromPath(path))
+        local defaultValue = GetNestedValue(self.defaults, path)
 
         if defaultValue == nil then
             return fallback
@@ -100,13 +96,20 @@ function ns:GetConfig(path, fallback)
     return value
 end
 
-function ns:GetLayoutConfig(path, fallback)
+function ns:SetConfig(path, value, refreshEquipmentFrame)
+    if not self.config then
+        return false
+    end
 
-    local layoutName = LEM.GetActiveLayoutName()
-    local layoutConfigName = "editMode.layouts." .. layoutName
-    path = layoutConfigName .. "." .. path
+    SetNestedValue(self.config, path, value)
 
-    return self:GetConfig(path, fallback)
+    self:Debug("Config updated:", path, "=", value)
+
+    if refreshEquipmentFrame then
+        self:RefreshFrame()
+    end
+
+    return true
 end
 
 function ns:GetCharConfig(path, fallback)
@@ -132,58 +135,6 @@ function ns:GetCharConfig(path, fallback)
     return value
 end
 
-function ns:IsValidOrientation(value)
-    return value == ns.enums.Orientation.HorizontalCenter
-        or value == ns.enums.Orientation.HorizontalLeftToRight
-        or value == ns.enums.Orientation.HorizontalRightToLeft
-        or value == ns.enums.Orientation.VerticalCenter
-        or value == ns.enums.Orientation.VerticalTopToBottom
-        or value == ns.enums.Orientation.VerticalBottomToTop
-end
-
-local function isValidSetConfig(path, value)
-    if not ns.config then
-        return false
-    end
-
-    local layoutlessPath = removeLayoutFromPath(path)
-
-    if layoutlessPath == "icon.orientation" and not ns:IsValidOrientation(value) then
-        return false
-    end
-
-    return true
-end
-
-function ns:SetConfig(path, value, refreshEquipmentFrame)
-    if refreshEquipmentFrame == nil then
-        refreshEquipmentFrame = false
-    end
-
-    if not isValidSetConfig(path, value) then
-        return false
-    end
-
-    SetNestedValue(self.config, path, value)
-
-    self:Debug("Config updated:", path, "=", value)
-
-    if refreshEquipmentFrame then
-        self:RefreshFrame()
-    end
-
-    return true
-end
-
-function ns:SetLayoutConfig(path, value, refreshEquipmentFrame)
-
-    local layoutName = LEM.GetActiveLayoutName()
-    local layoutConfigName = "editMode.layouts." .. layoutName
-    path = layoutConfigName .. "." .. path
-
-    return self:SetConfig(path, value, refreshEquipmentFrame)
-end
-
 function ns:SetCharConfig(path, value)
     if not self.charConfig then
         return false
@@ -194,4 +145,142 @@ function ns:SetCharConfig(path, value)
     self:Debug("Char config updated:", path, "=", value)
 
     return true
+end
+
+-- =========================================
+-- Layout scoped config
+-- =========================================
+
+-- The layout name is a table key, never part of the dot path: names may contain
+-- dots ("1.0 EUI", created by ElvUI) and would otherwise split into two keys.
+local function GetLayoutTable(create)
+    local layoutName = LEM:GetActiveLayoutName()
+
+    if not ns.config or not layoutName then
+        return nil
+    end
+
+    local editMode = ns.config.editMode
+
+    if not editMode then
+        if not create then
+            return nil
+        end
+
+        editMode = {}
+        ns.config.editMode = editMode
+    end
+
+    local layouts = editMode.layouts
+
+    if not layouts then
+        if not create then
+            return nil
+        end
+
+        layouts = {}
+        editMode.layouts = layouts
+    end
+
+    if not layouts[layoutName] and create then
+        layouts[layoutName] = {}
+    end
+
+    return layouts[layoutName]
+end
+
+function ns:GetLayoutConfig(path, fallback)
+    local layout = GetLayoutTable(false)
+    local value = layout and GetNestedValue(layout, path)
+
+    if value ~= nil then
+        return value
+    end
+
+    local defaultValue = GetNestedValue(self.defaults, path)
+
+    if defaultValue == nil then
+        return fallback
+    end
+
+    layout = GetLayoutTable(true)
+
+    if not layout then
+        return DeepCopy(defaultValue)
+    end
+
+    SetNestedValue(layout, path, DeepCopy(defaultValue))
+
+    return GetNestedValue(layout, path)
+end
+
+function ns:IsValidOrientation(value)
+    return value == ns.enums.Orientation.HorizontalCenter
+        or value == ns.enums.Orientation.HorizontalLeftToRight
+        or value == ns.enums.Orientation.HorizontalRightToLeft
+        or value == ns.enums.Orientation.VerticalCenter
+        or value == ns.enums.Orientation.VerticalTopToBottom
+        or value == ns.enums.Orientation.VerticalBottomToTop
+end
+
+function ns:SetLayoutConfig(path, value, refreshEquipmentFrame)
+    if path == "icon.orientation" and not self:IsValidOrientation(value) then
+        return false
+    end
+
+    local layout = GetLayoutTable(true)
+
+    if not layout then
+        self:Debug("Layout config not updated, no active layout:", path)
+        return false
+    end
+
+    SetNestedValue(layout, path, value)
+
+    self:Debug("Layout config updated:", path, "=", value)
+
+    if refreshEquipmentFrame then
+        self:RefreshFrame()
+    end
+
+    return true
+end
+
+-- Layout names used to be concatenated into the config path, so a name with a dot
+-- was stored split across two keys ("1.0 EUI" -> layouts["1"]["0 EUI"]). Copy that
+-- data over to the correctly keyed table; the old keys are left untouched.
+local function CopyLegacySplitLayoutConfig(layouts, layoutName)
+    if not string.find(layoutName, ".", 1, true) then
+        return nil
+    end
+
+    local legacy = GetNestedValue(layouts, layoutName)
+
+    if type(legacy) ~= "table" then
+        return nil
+    end
+
+    return DeepCopy(legacy)
+end
+
+function ns:EnsureLayoutDefaults()
+    local layout = GetLayoutTable(true)
+
+    if not layout then
+        return
+    end
+
+    local layoutName = LEM:GetActiveLayoutName()
+    local layouts = self.config.editMode.layouts
+
+    if not next(layout) then
+        layouts[layoutName] = CopyLegacySplitLayoutConfig(layouts, layoutName) or layout
+        layout = layouts[layoutName]
+    end
+
+    for _, key in ipairs(ns.const.LayoutScopedDefaultKeys) do
+        if layout[key] == nil then
+            layout[key] = DeepCopy(self.defaults[key])
+        end
+    end
 end

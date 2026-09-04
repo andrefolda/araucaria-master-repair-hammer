@@ -3,6 +3,7 @@ local addonName, ns = ...
 local function RegisterBlacksmithListeners(frame)
     frame:RegisterEvent(ns.enums.Blizz.Events.PaperDollInfo.PlayerEquipmentChanged)
     frame:RegisterEvent(ns.enums.Blizz.Events.PaperDollInfo.UpdateInventoryDurability)
+    frame:RegisterEvent(ns.enums.Blizz.Events.SystemInfo.PlayerRegenDisabled)
     frame:RegisterEvent(ns.enums.Blizz.Events.SystemInfo.PlayerRegenEnabled)
     frame:RegisterEvent(ns.enums.Blizz.Events.SystemInfo.PlayerEnteringWorld)
     ns:Debug("Equipment/durability listeners registered")
@@ -124,6 +125,11 @@ local function OnPlayerEnteringWorld()
     StartDurabilitySyncRetry()
 end
 
+local function OnPlayerRegenDisabled()
+    ns:Debug("PLAYER_REGEN_DISABLED fired")
+    ns:HideFrameForCombat()
+end
+
 local function OnPlayerRegenEnabled()
     ns:Debug("PLAYER_REGEN_ENABLED fired")
     if ns.pendingRefresh then
@@ -145,6 +151,8 @@ frame:SetScript(ns.enums.Blizz.ScriptTypeName.Frame.OnEvent, function(self, even
         OnTrackedEquipmentChanged(self, event, ...)
     elseif event == ns.enums.Blizz.Events.PaperDollInfo.UpdateInventoryDurability then
         OnTrackedDurabilityUpdate()
+    elseif event == ns.enums.Blizz.Events.SystemInfo.PlayerRegenDisabled then
+        OnPlayerRegenDisabled()
     elseif event == ns.enums.Blizz.Events.SystemInfo.PlayerRegenEnabled then
         OnPlayerRegenEnabled()
     elseif event == ns.enums.Blizz.Events.SystemInfo.PlayerEnteringWorld then

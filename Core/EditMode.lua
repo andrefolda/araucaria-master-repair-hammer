@@ -303,6 +303,19 @@ local function AddFrameSettings(frame)
                 ns:SetLayoutConfig("showOnlyRepairable", value, true)
             end,
         },
+        {
+            parentId = "iconConfigs",
+            name = L.HIDE_IN_COMBAT,
+            kind = LEM.SettingType.Checkbox,
+            default = ns.defaults.hideInCombat,
+            tooltip = L.HIDE_IN_COMBAT_TOOLTIP,
+            get = function()
+                return ns:GetLayoutConfig("hideInCombat")
+            end,
+            set = function(_, value)
+                ns:SetLayoutConfig("hideInCombat", value, true)
+            end,
+        },
 
 
 

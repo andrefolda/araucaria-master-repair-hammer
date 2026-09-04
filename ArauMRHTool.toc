@@ -1,4 +1,4 @@
-## Interface: 120007
+## Interface: 120100
 ## Title: Araucaria Master Repair Hammer
 ## Title-ptBR: Araucaria Martelo de Reparo do Mestre
 ## Notes: Araucaria Master Repair Hammer, facilitates the use of Blacksmiths' Master Repair Hammer to repair damaged gear.

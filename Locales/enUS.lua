@@ -27,6 +27,8 @@ ns.Locales["enUS"] = {
 
     SHOW_ONLY_REPAIRABLE          = "Show Only Repairable",
     SHOW_ONLY_REPAIRABLE_TOOLTIP  = "Only show equipment slots your Master Repair Hammer can currently repair. If you just mastered a new specialization, reload your UI (/reload) for this to update.",
+    HIDE_IN_COMBAT                = "Hide In Combat",
+    HIDE_IN_COMBAT_TOOLTIP        = "Hides the addon while you're in combat. The Edit Mode preview always ignores this and keeps showing.",
     CANNOT_REPAIR_TOOLTIP         = "Your Master Repair Hammer cannot repair this item yet.",
     WARNING_ICON_SETTINGS         = "Warning Icon Settings",
 

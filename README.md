@@ -1,7 +1,7 @@
 # Araucaria Master Repair Hammer
 
 [![CurseForge](https://img.shields.io/curseforge/v/1504924?label=CurseForge&logo=curseforge&color=F16436)](https://www.curseforge.com/wow/addons/araucaria-master-repair-hammer)
-![WoW](https://img.shields.io/badge/WoW-12.0.7-blue?logo=battle.net)
+![WoW](https://img.shields.io/badge/WoW-12.1.0-blue?logo=battle.net)
 
 A World of Warcraft addon for Blacksmiths who carry a Master Repair Hammer. It monitors the durability of your equipped gear and shows clickable icons for each piece that needs repair — clicking an icon uses the right hammer to repair that slot directly.
 

@@ -184,3 +184,31 @@ function ns:CanRepairSlot(slotId, itemLevelReq, classID, subclassID)
 
     return plan ~= nil and itemLevelReq ~= nil and itemLevelReq <= plan.maxItemLevelReq
 end
+
+-- =========================================
+-- Refulgent Repair Hammer (fallback)
+-- =========================================
+--
+-- Used for any damaged slot the player's specialization doesn't cover (missing perk,
+-- item req. level above the track's ceiling, non-plate armor...), as long as there's
+-- one in the bags. Unlike the spec plan, this is checked live every refresh -- the
+-- bag count changes during the session (see BAG_UPDATE_DELAYED in Init.lua).
+ns.const.FallbackRepairHammerItemId = 238209 -- Refulgent Repair Hammer
+
+function ns:GetFallbackRepairHammerCount()
+    return C_Item.GetItemCount(self.const.FallbackRepairHammerItemId) or 0
+end
+
+-- Returns the hammer item ID to repair this slot with (nil if none), and whether that
+-- hammer is the Refulgent fallback rather than the spec's Master Repair Hammer.
+function ns:ResolveRepairHammer(slotId, itemLevelReq, classID, subclassID, hasFallbackHammer)
+    if self:CanRepairSlot(slotId, itemLevelReq, classID, subclassID) then
+        return self:GetRepairPlanEntry(slotId, classID, subclassID).hammerItemId, false
+    end
+
+    if hasFallbackHammer then
+        return self.const.FallbackRepairHammerItemId, true
+    end
+
+    return nil, false
+end

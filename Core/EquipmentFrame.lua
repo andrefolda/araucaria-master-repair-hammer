@@ -2,11 +2,6 @@ local _, ns = ...
 
 local L = ns.L
 
--- MainHand/OffHand can hold any weapon bucket (or a shield, OffHand only), so their
--- macro depends on the currently equipped item and must be resolved every refresh.
--- The other 8 (pure armor) slots are resolved once at login, see SetArmorSlotMacro.
-local dynamicMacroSlots = { [16] = true, [17] = true }
-
 local warningIconTexturePath = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
 local function ShowTooltip(owner)
@@ -37,14 +32,6 @@ local function HideTooltip()
 
     if ShoppingTooltip2 then
         ShoppingTooltip2:Hide()
-    end
-end
-
-local function SetArmorSlotMacro(iconFrame, slotId)
-    local plan = ns.repairPlan and ns.repairPlan.bySlot[slotId]
-
-    if plan then
-        iconFrame:SetAttribute("macrotext", "/use item:" .. plan.hammerItemId .. "\r\n/use " .. slotId)
     end
 end
 
@@ -95,7 +82,8 @@ local function CreateEquipmentIconFrame(frame, slotId)
 
     iconFrame.warningIcon:SetScript(ns.enums.Blizz.ScriptTypeName.ScriptRegion.OnEnter, function(self)
         GameTooltip:SetOwner(self, ns.enums.Blizz.TooltipAnchor.AnchorRight)
-        GameTooltip:SetText(L.CANNOT_REPAIR_TOOLTIP)
+        local text = iconFrame.usesFallbackHammer and L.FALLBACK_HAMMER_TOOLTIP or L.CANNOT_REPAIR_TOOLTIP
+        GameTooltip:SetText(text, nil, nil, nil, nil, true)
         GameTooltip:Show()
     end)
 
@@ -117,10 +105,6 @@ local function CreateEquipmentIconFrame(frame, slotId)
     end)
 
     iconFrame:SetAttribute("type", "macro")
-
-    if not dynamicMacroSlots[slotId] then
-        SetArmorSlotMacro(iconFrame, slotId)
-    end
 
     ns:HookGoldTrackingForIcon(iconFrame)
 
@@ -167,6 +151,7 @@ end
 local function GetLowDurabilityItems()
     local threshold = ns:GetLayoutConfig("durabilityThreshold")
     local showOnlyRepairable = ns:GetLayoutConfig("showOnlyRepairable")
+    local hasFallbackHammer = ns:GetFallbackRepairHammerCount() > 0
     local lowDurabilityItems = {}
 
     for _, slotId in ipairs(ns.const.Equipment.WatchedSlots) do
@@ -190,7 +175,9 @@ local function GetLowDurabilityItems()
                         subclassID = itemSubClassID
                     end
 
-                    local repairable = ns:CanRepairSlot(slotId, itemLevelReq, classID, subclassID)
+                    local hammerItemId, usesFallbackHammer =
+                        ns:ResolveRepairHammer(slotId, itemLevelReq, classID, subclassID, hasFallbackHammer)
+                    local repairable = hammerItemId ~= nil
 
                     if repairable or not showOnlyRepairable then
                         lowDurabilityItems[slotId] = {
@@ -203,6 +190,8 @@ local function GetLowDurabilityItems()
                             classID = classID,
                             subclassID = subclassID,
                             repairable = repairable,
+                            hammerItemId = hammerItemId,
+                            usesFallbackHammer = usesFallbackHammer,
                         }
                     end
                 end
@@ -243,6 +232,8 @@ local function GetDummyItems()
     local showOnlyRepairable = ns:GetLayoutConfig("showOnlyRepairable")
 
     local slots = ns.const.Equipment.WatchedSlots
+    -- Each slot the spec can't cover is randomly either covered by the Refulgent
+    -- fallback (colored + warning) or not at all (desaturated + warning).
     local unrepairableSlots = {}
     do
         local pool = {}
@@ -253,7 +244,7 @@ local function GetDummyItems()
         local unrepairableCount = math.min(math.random(1, 3), #pool)
         for _ = 1, unrepairableCount do
             local index = math.random(1, #pool)
-            unrepairableSlots[table.remove(pool, index)] = true
+            unrepairableSlots[table.remove(pool, index)] = math.random() < 0.5 and "fallback" or "none"
         end
     end
 
@@ -262,7 +253,8 @@ local function GetDummyItems()
         local ratio = math.random() * durabilityThreshold
 
         local texture = dummyTextures[slotId]
-        local repairable = not unrepairableSlots[slotId]
+        local usesFallbackHammer = unrepairableSlots[slotId] == "fallback"
+        local repairable = not unrepairableSlots[slotId] or usesFallbackHammer
 
         if repairable or not showOnlyRepairable then
             ns.dummyItems[slotId] = {
@@ -273,10 +265,11 @@ local function GetDummyItems()
                 ratio = ratio,
                 itemLevelReq = 90,
                 classID = ns.enums.Blizz.Item.ClassID.Armor,
-                subclassID = repairable
-                    and ns.enums.Blizz.Item.ArmorSubclassID.Plate
-                    or ns.enums.Blizz.Item.ArmorSubclassID.Leather,
+                subclassID = unrepairableSlots[slotId]
+                    and ns.enums.Blizz.Item.ArmorSubclassID.Leather
+                    or ns.enums.Blizz.Item.ArmorSubclassID.Plate,
                 repairable = repairable,
+                usesFallbackHammer = usesFallbackHammer,
             }
         end
 
@@ -315,11 +308,15 @@ local function LayoutIconText(iconFrame, itemData)
     end
 end
 
-local function SetWeaponSlotMacro(iconFrame, slotId, itemData)
-    local plan = ns:GetRepairPlanEntry(slotId, itemData.classID, itemData.subclassID)
-
-    if plan then
-        iconFrame:SetAttribute("macrotext", "/use item:" .. plan.hammerItemId .. "\r\n/use " .. slotId)
+-- Rewritten every refresh for every slot: which hammer applies depends on the equipped
+-- item (weapon bucket, armor subtype, req. level) and on whether a Refulgent Repair
+-- Hammer is in the bags. No hammer at all (preview items included) clears the macro,
+-- so clicking the icon does nothing.
+local function SetRepairMacro(iconFrame, slotId, hammerItemId)
+    if hammerItemId then
+        iconFrame:SetAttribute("macrotext", "/use item:" .. hammerItemId .. "\r\n/use " .. slotId)
+    else
+        iconFrame:SetAttribute("macrotext", nil)
     end
 end
 
@@ -336,7 +333,9 @@ local function LayoutWarningIcon(iconFrame, itemData)
         ns:GetLayoutConfig("icon.warningIcon.position.yOffset")
     )
 
-    if itemData.repairable == false then
+    -- Shown whenever the spec's Master Repair Hammer can't handle the slot, whether or
+    -- not the Refulgent fallback covers it -- the tooltip tells the two apart.
+    if itemData.repairable == false or itemData.usesFallbackHammer then
         iconFrame.warningIcon:Show()
     else
         iconFrame.warningIcon:Hide()
@@ -361,12 +360,11 @@ local function LayoutIcon(iconPoint, iconFrame, itemData)
     iconFrame.maximum = itemData.maximum
     iconFrame.ratio = itemData.ratio
     iconFrame.repairable = itemData.repairable
+    iconFrame.usesFallbackHammer = itemData.usesFallbackHammer
 
     LayoutIconText(iconFrame, itemData)
 
-    if dynamicMacroSlots[iconFrame.slotId] then
-        SetWeaponSlotMacro(iconFrame, iconFrame.slotId, itemData)
-    end
+    SetRepairMacro(iconFrame, iconFrame.slotId, itemData.hammerItemId)
 
     LayoutWarningIcon(iconFrame, itemData)
 
@@ -387,6 +385,7 @@ local function ResetIcon(iconFrame)
     iconFrame.maximum = nil
     iconFrame.ratio = nil
     iconFrame.repairable = nil
+    iconFrame.usesFallbackHammer = nil
 
     iconFrame:Hide()
 end

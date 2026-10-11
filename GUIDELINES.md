@@ -9,6 +9,9 @@ Midnight), each gated by its own Blacksmithing specialization tree and covering 
 req. levels up to its own ceiling. The addon resolves which hammer/track applies per
 slot — see [Repair Eligibility & Multi-Expansion Hammers](#repair-eligibility--multi-expansion-hammers).
 
+When the spec can't cover a slot, a **Refulgent Repair Hammer** (item `238209`) in the
+bags is used as a fallback — see [Refulgent Repair Hammer fallback](#refulgent-repair-hammer-fallback).
+
 It also tracks how much gold repairing with the hammer has saved compared to paying
 an NPC — see [Gold Savings Tracking](#gold-savings-tracking).
 
@@ -143,7 +146,8 @@ PLAYER_LOGIN  → ns:HasBlacksmithing()?
 
 After login, `ns:RefreshFrame()` is driven by `PLAYER_EQUIPMENT_CHANGED`,
 `UPDATE_INVENTORY_DURABILITY`, `PLAYER_REGEN_ENABLED` (deferred refresh),
-`PLAYER_ENTERING_WORLD` (zoning, also restarts the adaptive retry) and a
+`PLAYER_ENTERING_WORLD` (zoning, also restarts the adaptive retry),
+`BAG_UPDATE_DELAYED` (only when the Refulgent Repair Hammer count changed) and a
 `C_Timer.NewTicker` every `ns.const.RefreshIntervalSeconds` — see
 [Known Pitfalls](#durability-events-only-fire-on-a-change).
 
@@ -519,8 +523,11 @@ When Edit Mode is active, `ns.isPreviewMode = true`. `GetItems()` returns dummy 
 - Set `ns.forceDummyRefresh = true` to invalidate the cache on the next refresh
 - Dummy items have no repair interaction (clicking does nothing meaningful)
 - Dummy textures are hardcoded per slot in `EquipmentFrame.lua`
-- 1-3 random slots are marked `repairable = false` each time the dummy cache is
-  rebuilt, so the warning icon/desaturation can be previewed in Edit Mode
+- 1-3 random slots are marked as not covered by the spec each time the dummy cache is
+  rebuilt; each of those is randomly either `usesFallbackHammer = true` (colored +
+  warning) or `repairable = false` (desaturated + warning), so both states can be
+  previewed in Edit Mode
+- Dummy items have no `hammerItemId`, so the repair macro is cleared while previewing
 
 ---
 
@@ -568,25 +575,48 @@ Rule (see `Core/RepairTracks.lua`):
 
 `ns:GetLayoutConfig("showOnlyRepairable")` (layout-scoped checkbox) controls whether
 `GetLowDurabilityItems`/`GetDummyItems` drop non-repairable slots entirely, or include
-them with `itemData.repairable = false`. When included, `LayoutIcon` desaturates the
-main texture and shows `iconFrame.warningIcon` (a small bordered/outlined triangle,
-size and offset configurable) with its own tooltip.
+them with `itemData.repairable = false`. "Repairable" means *any* hammer covers it —
+slots covered only by the Refulgent fallback count as repairable and are always shown.
 
-### Macro per icon: two different update strategies
+`LayoutIcon` renders three states:
 
-- **The 8 pure armor slots** (Head/Shoulder/Chest/Waist/Legs/Feet/Wrist/Hands): the
-  slot's "category" never changes at runtime (Chest is always a chest piece, whatever
-  its armor subtype) — the macro is written **once**, in `CreateEquipmentIconFrame`
-  at login (`SetArmorSlotMacro`), reading `ns.repairPlan.bySlot[slotId]` directly.
-  Never touched again during the session.
-- **MainHand/OffHand**: the category (weapon bucket, or shield for OffHand) depends on
-  whatever is currently equipped — the macro is recalculated every `LayoutIcon` call
-  (`SetWeaponSlotMacro`/`ns:GetRepairPlanEntry`), inside the same `InCombatLockdown()`
-  guard already in `RefreshFrame`.
+| State | `itemData` | Icon | Warning icon / tooltip | Click |
+|---|---|---|---|---|
+| Spec covers it | `repairable = true` | colored | hidden | Master Repair Hammer macro |
+| Refulgent fallback | `repairable = true`, `usesFallbackHammer = true` | colored | shown, `L.FALLBACK_HAMMER_TOOLTIP` | Refulgent Repair Hammer macro |
+| Nothing covers it | `repairable = false` | desaturated | shown, `L.CANNOT_REPAIR_TOOLTIP` | macro cleared (does nothing) |
 
-Firing the macro against an item the chosen hammer can't actually repair is
-harmless — the game just shows an in-combat-log-style message, no Lua error — so
-there's no need to clear a stale macro when an item stops being repairable.
+`iconFrame.warningIcon` is a small bordered/outlined triangle, size and offset
+configurable; its `OnEnter` reads `iconFrame.usesFallbackHammer` to pick the text.
+
+### Refulgent Repair Hammer fallback
+
+`ns.const.FallbackRepairHammerItemId` (`Core/RepairTracks.lua`) — a consumable hammer,
+used for any slot the spec plan can't cover (missing perk, req. level above the
+track's ceiling, non-plate armor, unmapped weapon types…) as long as at least one is
+in the bags (`ns:GetFallbackRepairHammerCount()`, i.e. `C_Item.GetItemCount`).
+
+```lua
+ns:ResolveRepairHammer(slotId, itemLevelReq, classID, subclassID, hasFallbackHammer)
+-- → hammerItemId (or nil), usesFallbackHammer
+```
+
+The spec hammer always wins when it applies. Unlike `ns.repairPlan`, the bag count is
+read live every refresh (once per `GetLowDurabilityItems` call, not per slot). The
+`BAG_UPDATE_DELAYED` handler in `Init.lua` fires on every bag change, so it compares
+against the last seen count and only calls `RefreshFrame()` when it changed.
+
+### Macro per icon
+
+Every `LayoutIcon` call rewrites the slot's macro (`SetRepairMacro`) from
+`itemData.hammerItemId`, inside the same `InCombatLockdown()` guard already in
+`RefreshFrame` — the right hammer depends on the equipped item (weapon bucket, armor
+subtype, req. level) *and* on the bag contents, so it can change for any slot. With no
+hammer, the `macrotext` attribute is cleared so clicking does nothing.
+
+Firing a stale macro is still harmless — e.g. using the last Refulgent Repair Hammer
+in combat leaves the other fallback icons pointing at it until combat ends and the
+deferred refresh runs; the game just shows an error message, no Lua error.
 
 ---
 
@@ -709,7 +739,7 @@ event. `ns:HookGoldTrackingForIcon(iconFrame)` (called once per icon in
 `CreateEquipmentIconFrame`) adds a non-secure `OnClick` hook:
 
 1. On click, if `iconFrame.repairable` is falsy (per the last refresh), do nothing —
-   this slot isn't eligible for MRH repair, so tracking it as pending would risk a
+   no hammer (Master or Refulgent fallback) covers this slot, so tracking it as pending would risk a
    later unrelated durability increase (e.g. a paid vendor repair) getting wrongly
    credited as hammer savings.
 2. Otherwise, read `C_TooltipInfo.GetInventoryItem(unit, slotId).repairCost` (exact

@@ -3,6 +3,16 @@
 All notable changes to this addon are documented here. This file is what gets shown
 as the release changelog on CurseForge and Wago.
 
+## [Unreleased]
+
+### Added
+
+- Gear your Blacksmithing specialization can't repair yet now uses a Refulgent
+  Repair Hammer from your bags instead. The icon stays in color and the warning
+  icon's tooltip says the Refulgent hammer will be used. Gear is only grayed out
+  and unclickable when you have neither the specialization nor a Refulgent Repair
+  Hammer.
+
 ## [1.1.2] - 2026-09-03
 
 ### Added

@@ -20,9 +20,10 @@ local function OnRepairIconClick(iconFrame)
     local slotId = iconFrame.slotId
 
     if not slotId or not iconFrame.repairable then
-        -- Not eligible for MRH repair (per the last refresh) -- don't track it as
-        -- pending, or a later, unrelated durability increase (ex. a paid vendor
-        -- repair) could get wrongly credited as hammer savings.
+        -- No hammer (Master or Refulgent fallback) can repair it, per the last
+        -- refresh -- don't track it as pending, or a later, unrelated durability
+        -- increase (ex. a paid vendor repair) could get wrongly credited as hammer
+        -- savings.
         return
     end
 

@@ -238,6 +238,9 @@ ns.enums.Blizz.ScriptTypeName = {
 }
 
 ns.enums.Blizz.Events = {
+    Container = {
+        BagUpdateDelayed = "BAG_UPDATE_DELAYED",
+    },
     AddOns = {
         AddonLoaded = "ADDON_LOADED",
         AddonsUnloading = "ADDONS_UNLOADING",

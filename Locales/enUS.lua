@@ -26,10 +26,11 @@ ns.Locales["enUS"] = {
     Y_OFFSET                      = "Y Offset",
 
     SHOW_ONLY_REPAIRABLE          = "Show Only Repairable",
-    SHOW_ONLY_REPAIRABLE_TOOLTIP  = "Only show equipment slots your Master Repair Hammer can currently repair. If you just mastered a new specialization, reload your UI (/reload) for this to update.",
+    SHOW_ONLY_REPAIRABLE_TOOLTIP  = "Only show equipment slots your Master Repair Hammer, or a Refulgent Repair Hammer in your bags, can currently repair. If you just mastered a new specialization, reload your UI (/reload) for this to update.",
     HIDE_IN_COMBAT                = "Hide In Combat",
     HIDE_IN_COMBAT_TOOLTIP        = "Hides the addon while you're in combat. The Edit Mode preview always ignores this and keeps showing.",
-    CANNOT_REPAIR_TOOLTIP         = "Your Master Repair Hammer cannot repair this item yet.",
+    CANNOT_REPAIR_TOOLTIP         = "Your Master Repair Hammer cannot repair this item yet, and you have no Refulgent Repair Hammer in your bags.",
+    FALLBACK_HAMMER_TOOLTIP       = "Your Master Repair Hammer cannot repair this item yet. A Refulgent Repair Hammer from your bags will be used instead.",
     WARNING_ICON_SETTINGS         = "Warning Icon Settings",
 
     TODAY_SAVED                   = "Today's Saved",

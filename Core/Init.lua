@@ -6,6 +6,7 @@ local function RegisterBlacksmithListeners(frame)
     frame:RegisterEvent(ns.enums.Blizz.Events.SystemInfo.PlayerRegenDisabled)
     frame:RegisterEvent(ns.enums.Blizz.Events.SystemInfo.PlayerRegenEnabled)
     frame:RegisterEvent(ns.enums.Blizz.Events.SystemInfo.PlayerEnteringWorld)
+    frame:RegisterEvent(ns.enums.Blizz.Events.Container.BagUpdateDelayed)
     ns:Debug("Equipment/durability listeners registered")
 end
 
@@ -125,6 +126,23 @@ local function OnPlayerEnteringWorld()
     StartDurabilitySyncRetry()
 end
 
+-- Fires on every bag change (looting, vendoring...), but only the Refulgent Repair
+-- Hammer count matters to the frame: refresh only when it changes, i.e. when the
+-- fallback may have become (un)available.
+local lastFallbackHammerCount
+
+local function OnBagUpdateDelayed()
+    local count = ns:GetFallbackRepairHammerCount()
+
+    if count == lastFallbackHammerCount then
+        return
+    end
+
+    ns:Debug("Refulgent Repair Hammer count changed:", lastFallbackHammerCount, "->", count)
+    lastFallbackHammerCount = count
+    ns:RefreshFrame()
+end
+
 local function OnPlayerRegenDisabled()
     ns:Debug("PLAYER_REGEN_DISABLED fired")
     ns:HideFrameForCombat()
@@ -157,6 +175,8 @@ frame:SetScript(ns.enums.Blizz.ScriptTypeName.Frame.OnEvent, function(self, even
         OnPlayerRegenEnabled()
     elseif event == ns.enums.Blizz.Events.SystemInfo.PlayerEnteringWorld then
         OnPlayerEnteringWorld()
+    elseif event == ns.enums.Blizz.Events.Container.BagUpdateDelayed then
+        OnBagUpdateDelayed()
     end
 end)
 

@@ -16,6 +16,7 @@ A World of Warcraft addon for Blacksmiths who carry a Master Repair Hammer. It m
 - Text color changes as durability drops: white → yellow → red
 - Clicking an icon uses the correct Master Repair Hammer on that slot — the addon automatically picks between the Dragonflight, The War Within, or current-expansion hammer based on what you're actually specialized to repair
 - A warning icon (and an optional "Show Only Repairable" filter) flags gear the hammer can't repair yet — for example, if you haven't specialized in that armor piece or weapon type
+- If you have a Refulgent Repair Hammer in your bags, gear your specialization can't cover is repaired with it instead — the icon stays in color, with the warning icon telling you which hammer will be used
 - Tracks how much gold you've saved by using the hammer instead of paying an NPC to repair — today and all-time, per character
 - Fully integrated with WoW's **Edit Mode** for positioning and configuration
 - Per-layout settings (each Edit Mode layout has its own position and thresholds)
@@ -52,7 +53,7 @@ Read-only display of how much gold you've saved on repairs, today and all-time (
 |---|---|---|
 | Orientation | Horizontal - Centered | How icons are arranged (6 layout options) |
 | Icon Size | 40 | Width and height of each icon in pixels |
-| Show Only Repairable | Off | Hide slots the Master Repair Hammer can't actually repair, instead of showing them with a warning icon |
+| Show Only Repairable | Off | Hide slots that neither the Master Repair Hammer nor a Refulgent Repair Hammer in your bags can repair, instead of showing them with a warning icon |
 | Hide In Combat | Off | Hide the addon while you're in combat. The Edit Mode preview always ignores this and keeps showing |
 
 **Orientation options:** Horizontal Left to Right, Horizontal Right to Left, Horizontal Centered, Vertical Top to Bottom, Vertical Bottom to Top, Vertical Centered
